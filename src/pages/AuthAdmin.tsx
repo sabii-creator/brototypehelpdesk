@@ -166,7 +166,7 @@ const AuthAdmin = () => {
         ...formData,
         fullName: "",
         email: "",
-        requestReason: "AdminRequest feature and User Mangement Feauture is not completed.It will implemented soon.wait"
+        requestReason: "AdminRequest feature and User Mangement Feauture is not completed.It will implemented soon."
       });
     } catch (error: any) {
       toast({
