@@ -200,7 +200,7 @@ const AuthAdmin = () => {
         <Card className="transition-all duration-300 hover:shadow-lg">
           <CardHeader>
             <CardTitle>Admin Access</CardTitle>
-            <CardDescription>Login as admin</CardDescription>
+            <CardDescription>AdminRequest feature and User Mangement Feauture is not completed.It will implemented soon.</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
