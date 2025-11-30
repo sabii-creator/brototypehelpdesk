@@ -8,41 +8,57 @@ import { CheckCircle, XCircle, Clock } from "lucide-react";
 
 interface AdminRequest {
   id: string;
-  email: string;
-  full_name: string;
+  user_id: string;
   reason: string;
   status: string;
   created_at: string;
+  reviewed_at?: string;
+  reviewed_by?: string;
+}
+
+interface AdminRequestWithProfile extends AdminRequest {
+  email: string;
+  full_name: string;
 }
 
 const AdminRequestList = () => {
-  const [requests, setRequests] = useState<AdminRequest[]>([]);
+  const [requests, setRequests] = useState<AdminRequestWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   const fetchRequests = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: requestsData, error } = await supabase
         .from("admin_requests")
-        .select(`
-          *,
-          profiles!admin_requests_user_id_fkey (
-            full_name,
-            email
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       
-      // Transform the data to match expected structure
-      const transformedData = data?.map((request: any) => ({
-        ...request,
-        full_name: request.profiles?.full_name || 'Unknown',
-        email: request.profiles?.email || 'Unknown',
-      })) || [];
-      
-      setRequests(transformedData);
+      if (!requestsData || requestsData.length === 0) {
+        setRequests([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch profile data for each request
+      const requestsWithProfiles = await Promise.all(
+        requestsData.map(async (request) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email, full_name")
+            .eq("id", request.user_id)
+            .single();
+
+          return {
+            ...request,
+            email: profile?.email || 'Unknown',
+            full_name: profile?.full_name || 'Unknown',
+          };
+        })
+      );
+
+      setRequests(requestsWithProfiles);
     } catch (error: any) {
       toast({
         title: "Error",

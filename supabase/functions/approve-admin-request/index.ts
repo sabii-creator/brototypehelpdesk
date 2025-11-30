@@ -47,7 +47,7 @@ serve(async (req) => {
       throw new Error('Invalid request parameters');
     }
 
-    // Update the request
+    // Update the request with email and full_name
     const { data: request, error: updateError } = await supabase
       .from('admin_requests')
       .update({
@@ -56,51 +56,111 @@ serve(async (req) => {
         reviewed_at: new Date().toISOString(),
       })
       .eq('id', requestId)
-      .select()
+      .select('*, profiles!admin_requests_user_id_fkey(email, full_name)')
       .single();
 
     if (updateError) {
       throw updateError;
     }
 
+    // Extract profile data from the joined result
+    const profileData = (request as any).profiles;
+    const requestEmail = profileData?.email;
+    const requestFullName = profileData?.full_name;
+
     // If approved, create user account and grant admin role
     if (action === 'approve') {
-      // Create user account with a temporary password
-      const tempPassword = crypto.randomUUID();
-      const { data: newUser, error: createUserError } = await supabase.auth.admin.createUser({
-        email: request.email,
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: {
-          full_name: request.full_name,
-        },
-      });
-
-      if (createUserError) {
-        throw new Error(`Failed to create user: ${createUserError.message}`);
+      if (!requestEmail || !requestFullName) {
+        throw new Error('Could not retrieve user profile data');
       }
 
-      // Grant admin role
+      // Check if user already exists
+      const { data: existingUsers } = await supabase.auth.admin.listUsers();
+      let newUser: any;
+      
+      const existingUser = existingUsers?.users?.find((u: any) => u.email === requestEmail);
+      
+      if (existingUser) {
+        console.log('User already exists, updating metadata');
+        newUser = { user: existingUser };
+        
+        // Update user metadata
+        await supabase.auth.admin.updateUserById(existingUser.id, {
+          user_metadata: {
+            full_name: requestFullName,
+          },
+          email_confirm: true,
+        });
+      } else {
+        // Create user account with a temporary random password
+        const tempPassword = crypto.randomUUID() + crypto.randomUUID();
+        const { data: userData, error: createUserError } = await supabase.auth.admin.createUser({
+          email: requestEmail,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            full_name: requestFullName,
+          },
+        });
+
+        if (createUserError) {
+          throw new Error(`Failed to create user: ${createUserError.message}`);
+        }
+        
+        newUser = userData;
+      }
+
+      // Grant admin role (upsert to handle existing roles)
       const { error: roleInsertError } = await supabase
         .from('user_roles')
-        .insert({
+        .upsert({
           user_id: newUser.user.id,
           role: 'admin',
           created_by: user.id,
+        }, {
+          onConflict: 'user_id,role'
         });
 
       if (roleInsertError) {
         throw new Error(`Failed to grant admin role: ${roleInsertError.message}`);
       }
 
-      // Generate and send password reset link via Supabase's built-in email
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        request.email,
-        { redirectTo: `${Deno.env.get('SUPABASE_URL')}/auth/admin` }
-      );
+      // Generate password reset link
+      const appUrl = Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || '';
+      const { data: resetData, error: resetError } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email: requestEmail,
+        options: {
+          redirectTo: `${appUrl}/auth/admin`,
+        },
+      });
 
       if (resetError) {
-        console.error('Failed to send password reset email:', resetError);
+        console.error('Failed to generate reset link:', resetError);
+        throw new Error('Failed to generate password reset link');
+      }
+
+      console.log('Password reset link generated, sending email...');
+
+      // Send email with password setup link using Resend
+      try {
+        const { error: emailError } = await supabase.functions.invoke('send-admin-approval-email', {
+          body: {
+            email: requestEmail,
+            fullName: requestFullName,
+            resetLink: resetData.properties.action_link,
+          },
+        });
+
+        if (emailError) {
+          console.error('Failed to send approval email:', emailError);
+          // Don't throw - the user was created successfully, email is secondary
+        } else {
+          console.log('Approval email sent successfully');
+        }
+      } catch (emailError) {
+        console.error('Error invoking email function:', emailError);
+        // Don't throw - the user was created successfully
       }
 
       // Log the action
@@ -110,7 +170,7 @@ serve(async (req) => {
         resource_type: 'user_roles',
         resource_id: newUser.user.id,
         details: {
-          granted_to: request.email,
+          granted_to: requestEmail,
           request_id: requestId,
         },
       });
