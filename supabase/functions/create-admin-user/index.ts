@@ -43,9 +43,14 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // Check if user is admin
-    const { data: isAdmin } = await supabaseAdmin.rpc("is_admin", { _user_id: user.id });
-    
-    if (!isAdmin) {
+    const { data: roleData, error: checkRoleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+
+    if (checkRoleError || !roleData) {
       return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
