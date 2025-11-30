@@ -43,7 +43,7 @@ const AuthAdmin = () => {
             title: "No Admin Account",
             description: "No admin account exists yet. Redirecting to setup...",
           });
-          setTimeout(() => navigate("/setup"), 2000);
+          setTimeout(() => navigate("/auth/admin"), 2000);
         }
       } catch (error) {
         console.error("Error checking admin:", error);
