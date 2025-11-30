@@ -1,1 +1,10 @@
 project_id = "kpzdygjxkbqppxgqdcwm"
+
+[functions.cleanup-orphaned-admin]
+verify_jwt = false
+
+[functions.create-first-admin]
+verify_jwt = false
+
+[functions.setup-admin]
+verify_jwt = false
