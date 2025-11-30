@@ -41,8 +41,8 @@ const AuthAdmin = () => {
         }).eq("role", "admin");
         if ((count ?? 0) === 0) {
           toast({
-            title: "No Admin Account",
-            description: "No admin account exists yet. Redirecting to setup..."
+            title: "Sorry",
+            description: "AdminRequest feature and User Mangement Feauture is not completed.It will implemented soon."
           });
           setTimeout(() => navigate("/auth/admin"), 2000);
         }
@@ -166,7 +166,7 @@ const AuthAdmin = () => {
         ...formData,
         fullName: "",
         email: "",
-        requestReason: "AdminRequest feature and User Mangement Feauture is not completed.It will implemented soon."
+        requestReason: ""
       });
     } catch (error: any) {
       toast({
