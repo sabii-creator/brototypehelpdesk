@@ -205,7 +205,7 @@ const AuthAdmin = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-2 font-mono text-3xl">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="request">Request Access</TabsTrigger>
               </TabsList>
