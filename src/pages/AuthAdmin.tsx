@@ -40,8 +40,8 @@ const AuthAdmin = () => {
 
         if ((count ?? 0) === 0) {
           toast({
-            title: "No Admin Account",
-            description: "No admin account exists yet. Redirecting to setup...",
+            title: "",
+            description: "",
           });
           setTimeout(() => navigate("/auth/admin"), 2000);
         }
