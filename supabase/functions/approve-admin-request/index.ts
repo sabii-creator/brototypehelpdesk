@@ -47,74 +47,58 @@ serve(async (req) => {
       throw new Error('Invalid request parameters');
     }
 
-    // Update the request with email and full_name
-    const { data: request, error: updateError } = await supabase
+    // Get the admin request
+    const { data: request, error: requestError } = await supabase
+      .from('admin_requests')
+      .select('*')
+      .eq('id', requestId)
+      .single();
+
+    if (requestError || !request) {
+      throw new Error('Admin request not found');
+    }
+
+    // Get the user data from auth.users
+    const { data: requestUser, error: getUserError } = await supabase.auth.admin.getUserById(
+      request.user_id
+    );
+
+    if (getUserError || !requestUser.user) {
+      throw new Error('Could not retrieve user data for this request');
+    }
+
+    const requestEmail = requestUser.user.email;
+    const requestFullName = requestUser.user.user_metadata?.full_name || 'Admin User';
+
+    console.log('Request user:', { email: requestEmail, fullName: requestFullName });
+
+    // Update the request status
+    const { error: updateError } = await supabase
       .from('admin_requests')
       .update({
         status: action === 'approve' ? 'approved' : 'rejected',
         reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),
       })
-      .eq('id', requestId)
-      .select('*, profiles!admin_requests_user_id_fkey(email, full_name)')
-      .single();
+      .eq('id', requestId);
 
     if (updateError) {
       throw updateError;
     }
 
-    // Extract profile data from the joined result
-    const profileData = (request as any).profiles;
-    const requestEmail = profileData?.email;
-    const requestFullName = profileData?.full_name;
-
-    // If approved, create user account and grant admin role
+    // If approved, grant admin role to the existing user
     if (action === 'approve') {
-      if (!requestEmail || !requestFullName) {
-        throw new Error('Could not retrieve user profile data');
+      if (!requestEmail) {
+        throw new Error('Could not retrieve user email');
       }
 
-      // Check if user already exists
-      const { data: existingUsers } = await supabase.auth.admin.listUsers();
-      let newUser: any;
-      
-      const existingUser = existingUsers?.users?.find((u: any) => u.email === requestEmail);
-      
-      if (existingUser) {
-        console.log('User already exists, updating metadata');
-        newUser = { user: existingUser };
-        
-        // Update user metadata
-        await supabase.auth.admin.updateUserById(existingUser.id, {
-          user_metadata: {
-            full_name: requestFullName,
-          },
-          email_confirm: true,
-        });
-      } else {
-        // Create user account with a temporary random password
-        const tempPassword = crypto.randomUUID() + crypto.randomUUID();
-        const { data: userData, error: createUserError } = await supabase.auth.admin.createUser({
-          email: requestEmail,
-          password: tempPassword,
-          email_confirm: true,
-          user_metadata: {
-            full_name: requestFullName,
-          },
-        });
+      console.log('Approving admin request for user:', request.user_id);
 
-        if (createUserError) {
-          throw new Error(`Failed to create user: ${createUserError.message}`);
-        }
-        
-        newUser = userData;
-      }
-
-      // Grant admin role (upsert to handle existing roles)
+      // The user already exists (created during the request), just grant admin role
       const { error: roleInsertError } = await supabase
         .from('user_roles')
         .upsert({
-          user_id: newUser.user.id,
+          user_id: request.user_id,
           role: 'admin',
           created_by: user.id,
         }, {
@@ -124,6 +108,16 @@ serve(async (req) => {
       if (roleInsertError) {
         throw new Error(`Failed to grant admin role: ${roleInsertError.message}`);
       }
+
+      console.log('Admin role granted successfully');
+
+      // Update user metadata to ensure full_name is set
+      await supabase.auth.admin.updateUserById(request.user_id, {
+        user_metadata: {
+          full_name: requestFullName,
+        },
+        email_confirm: true,
+      });
 
       // Generate password reset link
       const appUrl = Deno.env.get('SUPABASE_URL')?.replace('/supabase', '') || '';
@@ -168,7 +162,7 @@ serve(async (req) => {
         user_id: user.id,
         action: 'admin_role_granted',
         resource_type: 'user_roles',
-        resource_id: newUser.user.id,
+        resource_id: request.user_id,
         details: {
           granted_to: requestEmail,
           request_id: requestId,
