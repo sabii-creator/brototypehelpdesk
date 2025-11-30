@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ const AuthAdmin = () => {
     toast
   } = useToast();
   const [loading, setLoading] = useState(false);
+  const [checkingAdmins, setCheckingAdmins] = useState(true);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -28,6 +29,32 @@ const AuthAdmin = () => {
     fullName: "",
     requestReason: ""
   });
+
+  // Check if any admin exists on mount
+  useEffect(() => {
+    const checkAdminExists = async () => {
+      try {
+        const { count } = await supabase
+          .from("user_roles")
+          .select("*", { count: "exact", head: true })
+          .eq("role", "admin");
+
+        if ((count ?? 0) === 0) {
+          toast({
+            title: "No Admin Account",
+            description: "No admin account exists yet. Redirecting to setup...",
+          });
+          setTimeout(() => navigate("/setup"), 2000);
+        }
+      } catch (error) {
+        console.error("Error checking admin:", error);
+      } finally {
+        setCheckingAdmins(false);
+      }
+    };
+
+    checkAdminExists();
+  }, [navigate, toast]);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -51,7 +78,12 @@ const AuthAdmin = () => {
       } = await supabase.from("user_roles").select("role").eq("user_id", data.user.id).eq("role", "admin").single();
       if (!roleData) {
         await supabase.auth.signOut();
-        throw new Error("Access denied. Admin privileges required.");
+        toast({
+          title: "Access Denied",
+          description: "This account does not have admin privileges.",
+          variant: "destructive",
+        });
+        return;
       }
       toast({
         title: "Welcome back!",
@@ -66,11 +98,22 @@ const AuthAdmin = () => {
           variant: "destructive"
         });
       } else {
-        toast({
-          title: "Error",
-          description: error.message || "Failed to login",
-          variant: "destructive"
-        });
+        const errorMsg = error.message || "Failed to login";
+        
+        // Check if it's an invalid credentials error
+        if (errorMsg.includes("Invalid login credentials") || errorMsg.includes("invalid_credentials")) {
+          toast({
+            title: "Invalid Credentials",
+            description: "The email or password you entered is incorrect. Please try again or use Forgot Password.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Error",
+            description: errorMsg,
+            variant: "destructive"
+          });
+        }
       }
     } finally {
       setLoading(false);
@@ -133,6 +176,14 @@ const AuthAdmin = () => {
       setLoading(false);
     }
   };
+  if (checkingAdmins) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return <div className="min-h-screen bg-background flex items-center justify-center p-4 animate-fade-in">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-3 mb-6">
