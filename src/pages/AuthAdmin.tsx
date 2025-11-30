@@ -29,6 +29,28 @@ const AuthAdmin = () => {
     fullName: "",
     requestReason: ""
   });
+  // Check if any admin exists on mount
+  useEffect(() => {
+    const checkAdminExists = async () => {
+      try {
+        const { count } = await supabase
+          .from("user_roles")
+          .select("*", { count: "exact", head: true })
+          .eq("role", "admin");
+
+        if ((count ?? 0) === 0) {
+          toast({
+            title: "No Admin Account",
+            description: "No admin account exists yet. Redirecting to setup...",
+          });
+          setTimeout(() => navigate("/setup"), 2000);
+        }
+      } catch (error) {
+        console.error("Error checking admin:", error);
+      } finally {
+        setCheckingAdmins(false);
+      }
+    };
 
 
     checkAdminExists();
