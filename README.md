@@ -1,4 +1,6 @@
 # Welcome to your Lovable project
+#Admin email:admin.brototype.com password:brototype2025
+#Student email:lapuser1598@gmail.com password:sabitheey
 
 ## Project info
 
