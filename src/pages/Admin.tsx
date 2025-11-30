@@ -93,11 +93,11 @@ const Admin = () => {
             </TabsContent>
 
             <TabsContent value="users" className="space-y-6">
-              <AdminUserManagement />
+              <AdminUserManagement(Comming Soon) />
             </TabsContent>
 
             <TabsContent value="requests" className="space-y-6">
-              <AdminRequestList />
+              <AdminRequestList(Comming Soon) />
             </TabsContent>
           </Tabs>
         </div>
