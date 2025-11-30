@@ -91,15 +91,6 @@ const Admin = () => {
                 onViewDetails={(complaint) => setSelectedComplaint(complaint.id)}
               />
             </TabsContent>
-
-            <TabsContent value="users" className="space-y-6">
-              <AdminUserManagement />
-            </TabsContent>
-
-            <TabsContent value="requests" className="space-y-6">
-              <AdminRequestList />
-            </TabsContent>
-          </Tabs>
         </div>
       </section>
 
