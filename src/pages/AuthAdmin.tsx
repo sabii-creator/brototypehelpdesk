@@ -34,16 +34,15 @@ const AuthAdmin = () => {
   useEffect(() => {
     const checkAdminExists = async () => {
       try {
-        const {
-          count
-        } = await supabase.from("user_roles").select("*", {
-          count: "exact",
-          head: true
-        }).eq("role", "admin");
+        const { count } = await supabase
+          .from("user_roles")
+          .select("*", { count: "exact", head: true })
+          .eq("role", "admin");
+
         if ((count ?? 0) === 0) {
           toast({
             title: "No Admin Account",
-            description: "No admin account exists yet. Redirecting to setup..."
+            description: "No admin account exists yet. Redirecting to setup...",
           });
           setTimeout(() => navigate("/setup"), 2000);
         }
@@ -53,6 +52,7 @@ const AuthAdmin = () => {
         setCheckingAdmins(false);
       }
     };
+
     checkAdminExists();
   }, [navigate, toast]);
   const handleLogin = async (e: React.FormEvent) => {
@@ -81,7 +81,7 @@ const AuthAdmin = () => {
         toast({
           title: "Access Denied",
           description: "This account does not have admin privileges.",
-          variant: "destructive"
+          variant: "destructive",
         });
         return;
       }
@@ -99,7 +99,7 @@ const AuthAdmin = () => {
         });
       } else {
         const errorMsg = error.message || "Failed to login";
-
+        
         // Check if it's an invalid credentials error
         if (errorMsg.includes("Invalid login credentials") || errorMsg.includes("invalid_credentials")) {
           toast({
@@ -134,31 +134,28 @@ const AuthAdmin = () => {
         });
         return;
       }
-
+      
       // First create the user account
-      const {
-        data: authData,
-        error: authError
-      } = await supabase.auth.signUp({
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email,
-        password: Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8),
-        // Temporary password
+        password: Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8), // Temporary password
         options: {
           data: {
-            full_name: fullName
+            full_name: fullName,
           }
         }
       });
+      
       if (authError) throw authError;
-
+      
       // Then create the admin request
-      const {
-        error
-      } = await supabase.from("admin_requests").insert({
+      const { error } = await supabase.from("admin_requests").insert({
         user_id: authData.user!.id,
         reason: reason
       });
+      
       if (error) throw error;
+      
       toast({
         title: "Request Submitted",
         description: "Your admin access request has been submitted. You'll receive an email if approved with instructions to set your password."
@@ -180,32 +177,39 @@ const AuthAdmin = () => {
     }
   };
   if (checkingAdmins) {
-    return <div className="min-h-screen bg-background flex items-center justify-center">
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>;
+      </div>
+    );
   }
+
   return <div className="min-h-screen bg-background flex items-center justify-center p-4 animate-fade-in">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-3 mb-6">
-          <img src={brototypeLogo} alt="Brototype Logo" className="w-14 h-14 rounded-full object-cover ring-2 ring-border" />
+          <img 
+            src={brototypeLogo} 
+            alt="Brototype Logo" 
+            className="w-14 h-14 rounded-full object-cover ring-2 ring-border"
+          />
           <div>
             <h1 className="text-2xl font-bold text-foreground tracking-tight">BROTOTYPE</h1>
             <p className="text-sm text-muted-foreground">Admin Portal</p>
           </div>
         </div>
 
-        <Card className="border-2 transition-all duration-300 hover:shadow-lg">
+        <Card className="border-2 transition-all duration-300 hover:shadow-lg"  >
           
         </Card>
 
         <Card className="transition-all duration-300 hover:shadow-lg">
           <CardHeader>
             <CardTitle>Admin Access</CardTitle>
-            <CardDescription className="text-center">Login as admin</CardDescription>
+            <CardDescription>Login as admin or request admin access</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2 font-mono text-3xl">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="request">Request Access</TabsTrigger>
               </TabsList>
@@ -229,7 +233,13 @@ const AuthAdmin = () => {
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Logging in..." : "Login as Admin"}
                   </Button>
-                  <Button type="button" variant="link" size="sm" onClick={() => setForgotPasswordOpen(true)} className="w-full">
+                  <Button
+                    type="button"
+                    variant="link"
+                    size="sm"
+                    onClick={() => setForgotPasswordOpen(true)}
+                    className="w-full"
+                  >
                     Forgot Password?
                   </Button>
                 </form>
@@ -280,7 +290,10 @@ const AuthAdmin = () => {
           </CardContent>
         </Card>
 
-        <ForgotPasswordDialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen} />
+        <ForgotPasswordDialog 
+          open={forgotPasswordOpen} 
+          onOpenChange={setForgotPasswordOpen} 
+        />
       </div>
     </div>;
 };

@@ -9,14 +9,14 @@ import ComplaintList from "@/components/ComplaintList";
 import ComplaintDetails from "@/components/ComplaintDetails";
 import AdminRequestList from "@/components/AdminRequestList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 const Admin = () => {
   const navigate = useNavigate();
-  const {
-    profile,
-    signOut
-  } = useAuth();
+  const { profile, signOut } = useAuth();
   const [selectedComplaint, setSelectedComplaint] = useState<string | null>(null);
-  return <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-info/5 animate-fade-in">
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-info/5 animate-fade-in">
       {/* Header */}
       <header className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-10 transition-all duration-300">
         <div className="container mx-auto px-4 py-4">
@@ -31,14 +31,24 @@ const Admin = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {profile && <span className="text-sm text-muted-foreground">
+              {profile && (
+                <span className="text-sm text-muted-foreground">
                   {profile.full_name}
-                </span>}
-              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/")}
+              >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
-              <Button variant="ghost" size="sm" onClick={signOut}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={signOut}
+              >
                 <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </Button>
@@ -54,7 +64,9 @@ const Admin = () => {
             <h2 className="text-3xl font-bold text-foreground mb-2">
               Admin Panel
             </h2>
-            <p className="text-muted-foreground">Manage complaints,and try to resolve it.</p>
+            <p className="text-muted-foreground">
+              Manage complaints, administrators, and system settings.
+            </p>
           </Card>
 
           <Tabs defaultValue="complaints" className="space-y-6">
@@ -74,7 +86,10 @@ const Admin = () => {
             </TabsList>
 
             <TabsContent value="complaints" className="space-y-4">
-              <ComplaintList isAdmin={true} onViewDetails={complaint => setSelectedComplaint(complaint.id)} />
+              <ComplaintList 
+                isAdmin={true}
+                onViewDetails={(complaint) => setSelectedComplaint(complaint.id)}
+              />
             </TabsContent>
 
             <TabsContent value="users" className="space-y-6">
@@ -89,7 +104,15 @@ const Admin = () => {
       </section>
 
       {/* Complaint Details Modal */}
-      {selectedComplaint && <ComplaintDetails complaintId={selectedComplaint} isAdmin={true} onClose={() => setSelectedComplaint(null)} />}
-    </div>;
+      {selectedComplaint && (
+        <ComplaintDetails
+          complaintId={selectedComplaint}
+          isAdmin={true}
+          onClose={() => setSelectedComplaint(null)}
+        />
+      )}
+    </div>
+  );
 };
+
 export default Admin;
