@@ -20,6 +20,7 @@ const InitialSetup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [cleaningUp, setCleaningUp] = useState(false);
   const [checking, setChecking] = useState(true);
   const [adminExists, setAdminExists] = useState(false);
   const [formData, setFormData] = useState({
@@ -44,24 +45,54 @@ const InitialSetup = () => {
       const adminAlreadyExists = (count ?? 0) > 0;
       setAdminExists(adminAlreadyExists);
       
-      // Automatically redirect if admin exists
+      // Don't automatically redirect - let user see the message and options
       if (adminAlreadyExists) {
         toast({
-          title: "Setup Already Complete",
-          description: "An admin account already exists. Redirecting to login...",
+          title: "Admin Account Detected",
+          description: "An admin role exists in the database. If you can't log in, you may need to clean up the database.",
         });
-        setTimeout(() => navigate("/auth/admin"), 2000);
       }
     } catch (error) {
       console.error("Error checking for admins:", error);
       toast({
         title: "Error",
-        description: "Failed to check admin status. Redirecting to home...",
+        description: "Failed to check admin status.",
         variant: "destructive",
       });
-      setTimeout(() => navigate("/"), 3000);
     } finally {
       setChecking(false);
+    }
+  };
+
+  const handleCleanupOrphanedRoles = async () => {
+    setCleaningUp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('cleanup-orphaned-admin');
+
+      if (error) throw error;
+
+      if (data?.cleaned > 0) {
+        toast({
+          title: "Cleanup Successful",
+          description: `Removed ${data.cleaned} orphaned admin role(s). You can now create a new admin account.`,
+        });
+        // Re-check admin status
+        await checkForAdmins();
+      } else {
+        toast({
+          title: "No Orphaned Roles",
+          description: "All admin roles have valid user accounts. Try using 'Forgot Password' on the login page.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Cleanup error:", error);
+      toast({
+        title: "Cleanup Failed",
+        description: error.message || "Failed to clean up orphaned roles",
+        variant: "destructive",
+      });
+    } finally {
+      setCleaningUp(false);
     }
   };
 
@@ -86,10 +117,12 @@ const InitialSetup = () => {
         if (error.message?.includes("admin account already exists") || 
             data?.error?.includes("admin account already exists")) {
           toast({
-            title: "Admin Already Exists",
-            description: "An admin account already exists. Redirecting to login...",
+            title: "Admin Role Already Exists",
+            description: "An admin role exists in the database. This may be an orphaned role. Please contact a database administrator.",
+            variant: "destructive",
           });
-          setTimeout(() => navigate("/auth/admin"), 2000);
+          // Trigger re-check to show the admin exists message
+          checkForAdmins();
           return;
         }
         throw error;
@@ -99,10 +132,11 @@ const InitialSetup = () => {
         // Handle error in response data
         if (data.error.includes("admin account already exists")) {
           toast({
-            title: "Admin Already Exists",
-            description: "Redirecting to login...",
+            title: "Admin Role Already Exists",
+            description: "An admin role exists in the database. Try logging in or contact an administrator.",
+            variant: "destructive",
           });
-          setTimeout(() => navigate("/auth/admin"), 2000);
+          checkForAdmins();
           return;
         }
         throw new Error(data.error);
@@ -131,9 +165,9 @@ const InitialSetup = () => {
           variant: "destructive",
         });
         
-        // If it's a 403 or admin exists error, redirect
+        // If it's a 403 or admin exists error, re-check admin status
         if (errorMessage.toLowerCase().includes("admin") || error.status === 403) {
-          setTimeout(() => navigate("/"), 2000);
+          checkForAdmins();
         }
       }
     } finally {
@@ -154,18 +188,39 @@ const InitialSetup = () => {
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="space-y-1 flex flex-col items-center">
-            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-4">
-              <AlertCircle className="w-8 h-8 text-primary-foreground" />
+            <div className="w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center mb-4">
+              <AlertCircle className="w-8 h-8 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-center">Setup Complete</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">Admin Role Detected</CardTitle>
             <CardDescription className="text-center">
-              An admin account already exists. Please use the regular login page.
+              An admin role exists in the database but you may not be able to log in.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Button onClick={() => navigate("/")} className="w-full">
-              Go to Home
-            </Button>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-muted rounded-lg space-y-2">
+              <h3 className="font-semibold text-sm">Possible Solutions:</h3>
+              <ol className="text-sm space-y-2 list-decimal list-inside">
+                <li>Try logging in with existing credentials</li>
+                <li>Use "Forgot Password" on the login page</li>
+                <li>Contact a database administrator to clean up orphaned roles</li>
+              </ol>
+            </div>
+            <div className="space-y-2">
+              <Button onClick={() => navigate("/auth/admin")} className="w-full">
+                Go to Admin Login
+              </Button>
+              <Button 
+                onClick={handleCleanupOrphanedRoles} 
+                variant="destructive" 
+                className="w-full"
+                disabled={cleaningUp}
+              >
+                {cleaningUp ? "Cleaning Up..." : "Clean Up Orphaned Roles"}
+              </Button>
+              <Button onClick={() => navigate("/")} variant="outline" className="w-full">
+                Go to Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
