@@ -151,61 +151,6 @@ const Auth = () => {
     }
   };
 
-  const handleAdminRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast({
-          title: "Error",
-          description: "You must be logged in to request admin access",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const fullName = formData.fullName;
-      const email = formData.email;
-      const reason = (e.target as any).reason?.value || "";
-
-      if (!fullName || !email) {
-        toast({
-          title: "Validation Error",
-          description: "Please fill in all required fields",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { error } = await supabase.from("admin_requests").insert({
-        user_id: user.id,
-        email: email,
-        full_name: fullName,
-        reason: reason,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Request Submitted",
-        description: "Your admin access request has been submitted for review",
-      });
-
-      setFormData({ ...formData, fullName: "", email: "" });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit request",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-info/5 flex items-center justify-center p-4 animate-fade-in">
       <div className="w-full max-w-md">
@@ -226,10 +171,9 @@ const Auth = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                <TabsTrigger value="admin-request">Admin Request</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login">
@@ -315,51 +259,6 @@ const Auth = () => {
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Creating account..." : "Sign Up"}
                   </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="admin-request">
-                <form onSubmit={handleAdminRequest} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="admin-name">Full Name</Label>
-                    <Input
-                      id="admin-name"
-                      type="text"
-                      placeholder="Enter your full name"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      required
-                      maxLength={100}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="admin-email">Email</Label>
-                    <Input
-                      id="admin-email"
-                      type="email"
-                      placeholder="Enter your email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                      maxLength={255}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="reason">Reason for Admin Access</Label>
-                    <Input
-                      id="reason"
-                      name="reason"
-                      type="text"
-                      placeholder="Why do you need admin access?"
-                      maxLength={500}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Submitting..." : "Request Admin Access"}
-                  </Button>
-                  <p className="text-sm text-muted-foreground text-center">
-                    Note: You must be logged in to submit an admin request
-                  </p>
                 </form>
               </TabsContent>
             </Tabs>

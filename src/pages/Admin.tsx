@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import AdminUserManagement from "@/components/AdminUserManagement";
 import ComplaintList from "@/components/ComplaintList";
 import ComplaintDetails from "@/components/ComplaintDetails";
-import AdminRequestList from "@/components/AdminRequestList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Admin = () => {
@@ -70,7 +69,7 @@ const Admin = () => {
           </Card>
 
           <Tabs defaultValue="complaints" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="complaints" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 Complaints
@@ -78,10 +77,6 @@ const Admin = () => {
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
                 User Management
-              </TabsTrigger>
-              <TabsTrigger value="requests" className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Admin Requests
               </TabsTrigger>
             </TabsList>
 
@@ -94,10 +89,6 @@ const Admin = () => {
 
             <TabsContent value="users" className="space-y-6">
               <AdminUserManagement />
-            </TabsContent>
-
-            <TabsContent value="requests" className="space-y-6">
-              <AdminRequestList />
             </TabsContent>
           </Tabs>
         </div>
