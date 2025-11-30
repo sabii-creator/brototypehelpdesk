@@ -83,7 +83,7 @@ const AdminUserManagement = () => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Shield className="w-5 h-5 text-primary" />
-          <h2 className="text-xl font-semibold text-foreground"></h2>
+          <h2 className="text-xl font-semibold text-foreground">Admin User Management</h2>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
