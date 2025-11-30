@@ -47,7 +47,7 @@ function App() {
           <Route path="/auth/student" element={<AuthStudent />} />
           <Route path="/auth/admin" element={<AuthAdmin />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
-          
+          <Route path="/setup" element={<InitialSetup />} />
           <Route 
             path="/student" 
             element={
