@@ -76,7 +76,7 @@ const Admin = () => {
               </TabsTrigger>
               <TabsTrigger value="users" className="flex items-center gap-2">
                 <Users className="w-4 h-4" />
-                User Management
+                
               </TabsTrigger>
             </TabsList>
 
