@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shield, ArrowLeft, LogOut, Users, FileText } from "lucide-react";
+import { Shield, ArrowLeft, LogOut, BarChart3, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
-import AdminUserManagement from "@/components/AdminUserManagement";
+import { useState } from "react";
 import ComplaintList from "@/components/ComplaintList";
 import ComplaintDetails from "@/components/ComplaintDetails";
 import AdminRequestList from "@/components/AdminRequestList";
+import ComplaintAnalytics from "@/components/ComplaintAnalytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const Admin = () => {
   const navigate = useNavigate();
@@ -54,7 +54,7 @@ const Admin = () => {
             <h2 className="text-3xl font-bold text-foreground mb-2">
               Admin Panel
             </h2>
-            <p className="text-muted-foreground">Manage complaints,AdminRequest feature and User Mangement Feauture is not completed.It will implemented soon.</p>
+            <p className="text-muted-foreground">Manage complaints, view analytics, and handle admin requests.</p>
           </Card>
 
           <Tabs defaultValue="complaints" className="space-y-6">
@@ -63,9 +63,9 @@ const Admin = () => {
                 <FileText className="w-4 h-4" />
                 Complaints
               </TabsTrigger>
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                User Management
+              <TabsTrigger value="analytics" className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Analytics
               </TabsTrigger>
               <TabsTrigger value="requests" className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
@@ -77,8 +77,8 @@ const Admin = () => {
               <ComplaintList isAdmin={true} onViewDetails={complaint => setSelectedComplaint(complaint.id)} />
             </TabsContent>
 
-            <TabsContent value="users" className="space-y-6">
-              <AdminUserManagement />
+            <TabsContent value="analytics" className="space-y-6">
+              <ComplaintAnalytics />
             </TabsContent>
 
             <TabsContent value="requests" className="space-y-6">
