@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { useToast } from "@/hooks/use-toast";
 import { Shield, ArrowLeft } from "lucide-react";
 import { z } from "zod";
@@ -25,9 +25,7 @@ const AuthAdmin = () => {
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
-    fullName: "",
-    requestReason: ""
+    password: ""
   });
   // Check if any admin exists on mount
   useEffect(() => {
@@ -118,66 +116,6 @@ const AuthAdmin = () => {
       setLoading(false);
     }
   };
-  const handleAdminRequest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const fullName = formData.fullName;
-      const email = formData.email;
-      const reason = formData.requestReason;
-      if (!fullName || !email) {
-        toast({
-          title: "Validation Error",
-          description: "Please fill in all required fields",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // First create the user account
-      const {
-        data: authData,
-        error: authError
-      } = await supabase.auth.signUp({
-        email: email,
-        password: Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8),
-        // Temporary password
-        options: {
-          data: {
-            full_name: fullName
-          }
-        }
-      });
-      if (authError) throw authError;
-
-      // Then create the admin request
-      const {
-        error
-      } = await supabase.from("admin_requests").insert({
-        user_id: authData.user!.id,
-        reason: reason
-      });
-      if (error) throw error;
-      toast({
-        title: "Request Submitted",
-        description: "Your admin access request has been submitted. You'll receive an email if approved with instructions to set your password."
-      });
-      setFormData({
-        ...formData,
-        fullName: "",
-        email: "",
-        requestReason: ""
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit request",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
   if (checkingAdmins) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -193,79 +131,34 @@ const AuthAdmin = () => {
           </div>
         </div>
 
-        <Card className="border-2 transition-all duration-300 hover:shadow-lg">
-          
-        </Card>
-
         <Card className="transition-all duration-300 hover:shadow-lg">
           <CardHeader>
-            <CardTitle>Admin Access</CardTitle>
-            <CardDescription>AdminRequest feature and User Mangement Feauture is not completed.It will implemented soon.</CardDescription>
+            <CardTitle>Admin Login</CardTitle>
+            <CardDescription>Sign in to access the admin panel</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="login">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="request">Request Access</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="admin-email">Email</Label>
-                    <Input id="admin-email" type="email" placeholder="admin@brototype.com" value={formData.email} onChange={e => setFormData({
-                    ...formData,
-                    email: e.target.value
-                  })} required maxLength={255} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="admin-password">Password</Label>
-                    <Input id="admin-password" type="password" value={formData.password} onChange={e => setFormData({
-                    ...formData,
-                    password: e.target.value
-                  })} required maxLength={128} />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Logging in..." : "Login as Admin"}
-                  </Button>
-                  <Button type="button" variant="link" size="sm" onClick={() => setForgotPasswordOpen(true)} className="w-full">
-                    Forgot Password?
-                  </Button>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="request">
-                <form onSubmit={handleAdminRequest} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="request-name">Full Name</Label>
-                    <Input id="request-name" type="text" placeholder="Enter your full name" value={formData.fullName} onChange={e => setFormData({
-                    ...formData,
-                    fullName: e.target.value
-                  })} required maxLength={100} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="request-email">Email</Label>
-                    <Input id="request-email" type="email" placeholder="Enter your email" value={formData.email} onChange={e => setFormData({
-                    ...formData,
-                    email: e.target.value
-                  })} required maxLength={255} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="request-reason">Reason for Admin Access</Label>
-                    <Input id="request-reason" type="text" placeholder="Why do you need admin access?" value={formData.requestReason} onChange={e => setFormData({
-                    ...formData,
-                    requestReason: e.target.value
-                  })} maxLength={500} />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Submitting..." : "Request Admin Access"}
-                  </Button>
-                  <p className="text-sm text-muted-foreground text-center">
-                    No login required. You'll receive an email if your request is approved.
-                  </p>
-                </form>
-              </TabsContent>
-            </Tabs>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="admin-email">Email</Label>
+                <Input id="admin-email" type="email" placeholder="admin@brototype.com" value={formData.email} onChange={e => setFormData({
+                ...formData,
+                email: e.target.value
+              })} required maxLength={255} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="admin-password">Password</Label>
+                <Input id="admin-password" type="password" value={formData.password} onChange={e => setFormData({
+                ...formData,
+                password: e.target.value
+              })} required maxLength={128} />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Logging in..." : "Login as Admin"}
+              </Button>
+              <Button type="button" variant="link" size="sm" onClick={() => setForgotPasswordOpen(true)} className="w-full">
+                Forgot Password?
+              </Button>
+            </form>
 
             <div className="mt-4 space-y-2">
               <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="w-full">
