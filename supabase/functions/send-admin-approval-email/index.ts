@@ -25,7 +25,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending admin approval email to:", email);
 
     const emailResponse = await resend.emails.send({
-      from: "Brototype Admin <onboarding@resend.dev>",
+      from: "Brototype Admin <noreply@help.brototype.com>",
       to: [email],
       subject: "Admin Access Approved - Set Your Password",
       html: `
