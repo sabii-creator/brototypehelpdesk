@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import ComplaintList from "@/components/ComplaintList";
 import ComplaintDetails from "@/components/ComplaintDetails";
-import AdminRequestList from "@/components/AdminRequestList";
 import ComplaintAnalytics from "@/components/ComplaintAnalytics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const Admin = () => {
@@ -58,7 +57,7 @@ const Admin = () => {
           </Card>
 
           <Tabs defaultValue="complaints" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="complaints" className="flex items-center gap-2">
                 <FileText className="w-4 h-4" />
                 Complaints
@@ -66,10 +65,6 @@ const Admin = () => {
               <TabsTrigger value="analytics" className="flex items-center gap-2">
                 <BarChart3 className="w-4 h-4" />
                 Analytics
-              </TabsTrigger>
-              <TabsTrigger value="requests" className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Admin Requests
               </TabsTrigger>
             </TabsList>
 
@@ -79,10 +74,6 @@ const Admin = () => {
 
             <TabsContent value="analytics" className="space-y-6">
               <ComplaintAnalytics />
-            </TabsContent>
-
-            <TabsContent value="requests" className="space-y-6">
-              <AdminRequestList />
             </TabsContent>
           </Tabs>
         </div>
