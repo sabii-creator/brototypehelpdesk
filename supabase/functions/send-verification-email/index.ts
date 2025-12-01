@@ -172,7 +172,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Brototype <onboarding@resend.dev>",
+        from: "Brototype <noreply@help.brototype.com>",
         to: [email],
         subject: "Verify your Brototype account",
         html,
